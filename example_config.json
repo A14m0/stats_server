@@ -6,7 +6,7 @@
         "that are allowed to connect", 
         "to the server"
     ],
-    "data_format": [
+    "variables": [
         "Array of",
         "Variable names"
     ]

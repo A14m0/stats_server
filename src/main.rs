@@ -1,5 +1,8 @@
 use warp::Filter;
 use clap::{Arg, App, SubCommand};
+#[macro_use] extern crate serde;
+
+
 mod handler;
 mod config;
 mod log;
@@ -8,7 +11,7 @@ use log::{
     LTYPE
 };
 
-async fn run_server() {
+async fn run_server(config_struct: config::Config) {
     log(LTYPE::Info, format!("Started web server"));
 
     // favicon path filter
@@ -31,7 +34,7 @@ async fn run_server() {
         .tls()
         .cert_path("./cert.pem")
         .key_path("./key.pem")
-        .run(([127,0,0,1],8000))
+        .run(([127,0,0,1],config_struct.port()))
         .await;
 }
 
@@ -41,13 +44,6 @@ async fn main() {
     let matches =  App::new("Stats Server")
                         .version("0.1")
                         .about("Serves up statistics")
-                        .arg(Arg::with_name("config")
-                            .short("c")
-                            .long("config")
-                            .value_name("FILE")
-                            .help("Uses FILE as the config file of the server")
-                            .takes_value(true)
-                        ) 
                         .subcommand(SubCommand::with_name("new")
                             .about("Creates a new config file")
                             .version("1.0")
@@ -66,6 +62,19 @@ async fn main() {
                                 .takes_value(true)
                                 .required(true)
                             )
+                        )
+                        .subcommand(SubCommand::with_name("run")
+                            .about("Run the server")
+                            .version("0.1")
+                            .arg(Arg::with_name("config")
+                                .short("c")
+                                .long("config")
+                                .value_name("FILE")
+                                .help("Uses FILE as the config file of the server")
+                                .takes_value(true)
+                                .required(true)
+                            ) 
+                        
                         )
                         .get_matches();
     
@@ -95,13 +104,28 @@ async fn main() {
                 log(LTYPE::Error, format!("Failed to parse new config arguments!"))
             }
         }
-                
-        
-        
         std::process::exit(0);
         
     }
 
-    // run the server
-    run_server().await
+    // parse the config file
+    if matches.is_present("run") {
+        match matches.subcommand_matches("run") {
+            Some(new_matches) => {
+                let cfg = new_matches.value_of("config")
+                    .unwrap();
+                let cfg_file = match config::open_config(cfg.to_string()) {
+                    Ok(a) => a,
+                    Err(e) => {
+                        log(LTYPE::Error, format!("Failed to open config file: {}", e));
+                        std::process::exit(1);
+                    }
+                };
+
+                // run the server
+                run_server(cfg_file).await
+            },
+            None => panic!("Missing crit arg")
+        }
+    }
 }
