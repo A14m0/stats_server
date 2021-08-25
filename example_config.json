@@ -1,0 +1,13 @@
+{
+    "server_name": "The name of the website",
+    "port": 443,
+    "allowed_users": [
+        "Array of string UUIDs", 
+        "that are allowed to connect", 
+        "to the server"
+    ],
+    "data_format": [
+        "Array of",
+        "Variable names"
+    ]
+}
