@@ -1,19 +1,18 @@
 use warp::Filter;
 use clap::{Arg, App, SubCommand};
-use std::sync::Arc;
-use futures::lock::Mutex;
 use std::convert::Infallible;
 
 mod handler;
 mod config;
 mod log;
 mod database;
+mod helpers;
 use log::{
     log,
     LTYPE
 };
 
-async fn run_server(config_struct: config::Config, dbpath: Option<String>) {//db: Arc<Mutex<database::Database>>) {
+async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
     log(LTYPE::Info, format!("Started web server"));
 
     // create a new mutex for a handler object
@@ -36,15 +35,25 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {//db
             }
         );
     let get = warp::path!("get" / String / String)
-        .and(with_db(db))
+        .and(with_db(db.clone()))
         .and_then(move |uuid, encdat, db2| {
                     handler::get_handle(uuid, encdat, db2)        
             } 
             
         );
+    let adm = warp::path!("adm" / String)
+        .and(with_db(db))
+        .and_then( move |command, db3| {
+                    handler::adm_handle(command, db3)
+            }
+        );
 
     let api = api_root
-        .and(push.or(get));
+        .and(
+            push
+            .or(get)
+            .or(adm)
+        );
     //let routes = favico
     //    .or(hi);
     // run the server, and point it to the keys

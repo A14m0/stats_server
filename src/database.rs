@@ -20,11 +20,11 @@ pub struct DatabaseVar {
 // implement functions for DatabaseVar
 impl DatabaseVar {
     /// creates a new one
-    pub fn new() -> Self {
+    pub fn new(name: String, value: String, date: String) -> Self {
         DatabaseVar {
-            name: String::new(),
-            value: String::new(),
-            date: String::new()
+            name,
+            value,
+            date
         }
     }
 }
@@ -33,6 +33,14 @@ impl DatabaseVar {
 #[derive(Serialize, Deserialize)]
 pub struct Database {
     vars: Vec<DatabaseVar>
+}
+
+/// implements for Database
+impl Database {
+    /// add a new entry
+    pub fn add_entry(&mut self, new_entry: DatabaseVar) {
+        self.vars.push(new_entry);
+    }
 }
 
 pub type Db = Arc<Mutex<Database>>;

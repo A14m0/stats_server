@@ -1,6 +1,6 @@
 // defines all logging related functions
 use colored::Colorize;
-use chrono::prelude::*;
+use crate::helpers::gettime;
 
 /// defines the log type enumerator
 pub enum LTYPE {
@@ -18,10 +18,7 @@ pub fn log(lt: LTYPE, dat: String) {
         LTYPE::Error => "[FATAL]".red().bold()
     };
 
-    // get the date
-    let dt = Local::now();
-    let fmt = dt.format("%m-%d %H:%M:%S");//.to_string();
-
+    
     // print it
-    println!("{} [{}] {}", prolog, fmt, dat);
+    println!("{} [{}] {}", prolog, gettime(), dat);
 }
