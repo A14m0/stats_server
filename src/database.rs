@@ -8,6 +8,10 @@ use std::sync::{
     Arc,
     Mutex
 };
+use crate::log::{
+    log,
+    LTYPE
+};
 
 // define our DatabaseVar class
 #[derive(Serialize, Deserialize, Clone)]
@@ -87,6 +91,31 @@ impl Database {
     }
 }
 
+/// define a reponse JSON structure
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Response {
+    code: String
+}
+
+impl Response {
+    /// generate an "ok" response 
+    pub fn ok() -> Self {
+        Response {
+            code: "Ok".to_string()
+        }
+    }
+
+    /// generate an "error" response 
+    pub fn err(reason: String) -> Self {
+        Response {
+            code: format!("Failed: {}", reason)
+        }
+    }
+}
+
+
+
+
 pub type Db = Arc<Mutex<Database>>;
 
 /// initializes a db (potentially from a file)
@@ -121,9 +150,10 @@ pub fn save_db(db: Db, path: String) {
     let dat = &*db;
     let serialized = serde_json::ser::to_string(&dat).unwrap();
 
-    match std::fs::File::create(path) {
+    match std::fs::File::create(path.clone()) {
         Ok(mut file) => {
-            write!(file, "{}", serialized);
+            write!(file, "{}", serialized).unwrap();
+            log(LTYPE::Info, format!("Saved database to {}", path));
         },
         Err(e) => {
             panic!("Failed to save data to file: {}", e)

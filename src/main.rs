@@ -31,31 +31,30 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
     // api filters
     let api_root = warp::path!("api"/..);
     
+    // define the POST api
     let push = warp::path!("post" / String)
         .and(warp::post())
         .and(json_body())
         .and(with_db(db.clone()))
         .and_then( move |uuid, body, db1: database::Db|  {
-            println!("post handler");
-                    
-            handler::post_handle(uuid, body, db1)
+                    handler::post_handle(uuid, body, db1)
             }
         );
+
+    // define the GET api
     let get = warp::path!("get" / String / String)
         .and(with_db(db.clone()))
         .and_then(move |uuid, encdat, db2| {
-            println!("get handler");
-            
-            handler::get_handle(uuid, encdat, db2)        
+                    handler::get_handle(uuid, encdat, db2)        
             } 
             
         );
-    let adm = warp::path!("adm" / String)
+    
+    // define the ADMIN api
+    let adm = warp::path!("adm" / String / String)
         .and(warp::path::end())
-        .and(json_body())
         .and(with_db(db))
         .and_then( move |command, body, db3| {
-            println!("adm handler");
                     handler::adm_handle(command, body, db3)
             }
         );

@@ -1,7 +1,8 @@
 {
     "vars": [
         {
-            "name": "test",
+            "user": "test",
+            "name": "test_entry",
             "value": "test output",
             "date": "08-26 15:51:19"
         }

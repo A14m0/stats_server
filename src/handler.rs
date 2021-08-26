@@ -59,11 +59,27 @@ pub async fn get_handle(uuid: String,
 /// handle our data ADM request
 pub async fn adm_handle(
     command: String, 
-    body: database::DatabaseVar, 
+    path: String, 
     db: database::Db) -> Result<impl Reply>{
     
-        log(LTYPE::Info, format!("Triggered ADM handler"));
-    let resp = Response::new(format!(""));
-    Ok(resp)
+    log(LTYPE::Info, format!("Triggered ADM handler"));
+    
+    match &command[..] {
+        "save" => {
+            database::save_db(db, path)
+        },
+        "getall" => {
+            let db_ref = db.lock().unwrap();
+            return Ok(warp::reply::json(&(*db_ref)))
+        }
+        _ => return Err(
+            warp::reject::not_found()
+        )
+    }
+
+    Ok(warp::reply::json(
+            &database::Response::ok()
+        )
+    )
 }
 
