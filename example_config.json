@@ -1,13 +1,10 @@
 {
     "server_name": "The name of the website",
-    "port": 443,
+    "port": 8000,
     "allowed_users": [
-        "Array of string UUIDs", 
-        "that are allowed to connect", 
-        "to the server"
+        "test" 
     ],
     "variables": [
-        "Array of",
-        "Variable names"
+        "test"
     ]
 }

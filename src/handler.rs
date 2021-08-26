@@ -19,43 +19,39 @@ pub async fn post_handle(
     data: database::DatabaseVar,
     db: database::Db) -> Result<impl Reply>{
     // remember, data is stored in the body of the message
-    let encdat = "".to_string();
-
+    
     log(LTYPE::Info, format!("Triggered POST handler"));
     
     // add the new entry to the database and respnd with success
     let mut db_ref = db.lock().unwrap();
     (*db_ref).add_entry(
-        database::DatabaseVar::new(
-            uuid.clone(), 
-            encdat.clone(), 
-            gettime()
-        )
+        data
     );
 
-    let resp = Response::new(format!("Message: {}, {}", uuid, encdat));
+    let resp = warp::reply::with_status("OK", warp::http::StatusCode::default());//Response::new(format!("Message: {}, {}", uuid, encdat));
     Ok(resp)
 }
 
 /// handle our data GET request
 pub async fn get_handle(uuid: String, 
-    variable: database::DatabaseVar, 
+    variable: String, 
     db: database::Db) -> Result<impl Reply>{
+    
+    log(LTYPE::Info, format!("Triggered GET handler"));
     
     // get a ref to the database
     let db_ref = db.lock().unwrap();
     for entry in (*db_ref).entries() {
-        if entry.name() == variable.name() {
+        if entry.name() == variable {
             return Ok(
                 warp::reply::json(
-                    &variable
+                    &entry
                 )
             )
         }
     }
 
 
-    log(LTYPE::Info, format!("Triggered GET handler"));
     let resp = warp::reply::json(&database::DatabaseVar::empty());
     Ok(resp)
 }

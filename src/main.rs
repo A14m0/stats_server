@@ -1,6 +1,7 @@
 use warp::Filter;
 use clap::{Arg, App, SubCommand};
 use std::convert::Infallible;
+use std::io::Read;
 
 mod handler;
 mod config;
@@ -35,14 +36,17 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
         .and(json_body())
         .and(with_db(db.clone()))
         .and_then( move |uuid, body, db1: database::Db|  {
-                    handler::post_handle(uuid, body, db1)
+            println!("post handler");
+                    
+            handler::post_handle(uuid, body, db1)
             }
         );
-    let get = warp::path!("get" / String)
-        .and(json_body())
+    let get = warp::path!("get" / String / String)
         .and(with_db(db.clone()))
         .and_then(move |uuid, encdat, db2| {
-                    handler::get_handle(uuid, encdat, db2)        
+            println!("get handler");
+            
+            handler::get_handle(uuid, encdat, db2)        
             } 
             
         );
@@ -51,6 +55,7 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
         .and(json_body())
         .and(with_db(db))
         .and_then( move |command, body, db3| {
+            println!("adm handler");
                     handler::adm_handle(command, body, db3)
             }
         );
@@ -117,7 +122,13 @@ async fn main() {
                                 .help("Uses FILE as the config file of the server")
                                 .takes_value(true)
                                 .required(true)
-                            ) 
+                            ).arg(Arg::with_name("database")
+                                .short("d")
+                                .long("database")
+                                .value_name("FILE")
+                                .help("Uses FILE as the database file of the server")
+                                .takes_value(true)
+                            )
                         
                         )
                         .get_matches();
@@ -166,10 +177,27 @@ async fn main() {
                     }
                 };
 
-                // run the server
-                run_server(cfg_file, None).await
+                if new_matches.is_present("database") {
+                    let dbase_path = match new_matches.value_of("database") {
+                        Some(a) => a,
+                        None => panic!("No value provided to argument")
+                    };
+
+
+                    log(LTYPE::Info, format!("Running with DB at path {}", dbase_path));
+                    // run the server
+                    run_server(cfg_file, Some(dbase_path.to_string())).await
+
+                } else {
+                    // run the server
+                    run_server(cfg_file, None).await
+                }
             },
             None => panic!("Missing crit arg")
         }
     }
+
+    // if we get here we know that no arguments were provided
+    log(LTYPE::Error, format!("No arguments provided! Use '--help' to view usage"));
+    
 }

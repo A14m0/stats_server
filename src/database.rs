@@ -12,6 +12,7 @@ use std::sync::{
 // define our DatabaseVar class
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DatabaseVar {
+    user: String,
     name: String,
     value: String,
     date: String
@@ -20,8 +21,9 @@ pub struct DatabaseVar {
 // implement functions for DatabaseVar
 impl DatabaseVar {
     /// creates a new one
-    pub fn new(name: String, value: String, date: String) -> Self {
+    pub fn new(user: String, name: String, value: String, date: String) -> Self {
         DatabaseVar {
+            user,
             name,
             value,
             date
@@ -31,10 +33,16 @@ impl DatabaseVar {
     /// creates a new empty variable
     pub fn empty() -> Self {
         DatabaseVar {
+            user: String::new(),
             name: String::new(),
             value: String::new(),
             date: String::new()
         }
+    }
+
+    /// returns the uuid
+    pub fn user(&self) -> String {
+        self.user.clone()
     }
 
     /// returns name
@@ -51,6 +59,14 @@ impl DatabaseVar {
     }
 }
 
+/// implement print for DatabaseVar
+impl std::fmt::Display for DatabaseVar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "User: {}, Data: {}, Date: {}", self.name, self.value, self.date())
+    }
+}
+
+
 // define our Database structure
 #[derive(Serialize, Deserialize)]
 pub struct Database {
@@ -61,6 +77,7 @@ pub struct Database {
 impl Database {
     /// add a new entry
     pub fn add_entry(&mut self, new_entry: DatabaseVar) {
+        println!("Added new variable: {}", new_entry);
         self.vars.push(new_entry);
     }
 
