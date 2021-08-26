@@ -14,7 +14,7 @@ openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out c
 This will generate your key and certificate files. Store these in the root of 
 the crate (TODO: MAKE THE THING SMART ENOUGH TO FIND THE KEYS IN SAFER PLACES).
 
-Then all you need to do is run the following to spool up the environment
+Then all you need to do is run the following to see how to spool up the environment
 ```
-cargo run --release
+cargo run --release -- --help
 ```
