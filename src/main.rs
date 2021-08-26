@@ -12,6 +12,9 @@ use log::{
     LTYPE
 };
 
+// reference for sharing db between async things
+//https://github.com/andrewleverette/rust_warp_api/blob/master/src/handlers.rs
+
 async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
     log(LTYPE::Info, format!("Started web server"));
 
@@ -27,14 +30,16 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
     // api filters
     let api_root = warp::path!("api"/..);
     
-    let push = warp::path!("post" / String / String)
+    let push = warp::path!("post" / String)
         .and(warp::post())
+        .and(json_body())
         .and(with_db(db.clone()))
-        .and_then( move |uuid, encdat, db1: database::Db|  {
-                    handler::post_handle(uuid, encdat, db1)
+        .and_then( move |uuid, body, db1: database::Db|  {
+                    handler::post_handle(uuid, body, db1)
             }
         );
-    let get = warp::path!("get" / String / String)
+    let get = warp::path!("get" / String)
+        .and(json_body())
         .and(with_db(db.clone()))
         .and_then(move |uuid, encdat, db2| {
                     handler::get_handle(uuid, encdat, db2)        
@@ -42,9 +47,11 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
             
         );
     let adm = warp::path!("adm" / String)
+        .and(warp::path::end())
+        .and(json_body())
         .and(with_db(db))
-        .and_then( move |command, db3| {
-                    handler::adm_handle(command, db3)
+        .and_then( move |command, body, db3| {
+                    handler::adm_handle(command, body, db3)
             }
         );
 
@@ -67,6 +74,12 @@ async fn run_server(config_struct: config::Config, dbpath: Option<String>) {
 
 fn with_db(db: database::Db) -> impl Filter<Extract = (database::Db,), Error = Infallible> + Clone {
     warp::any().map(move || db.clone())
+}
+
+fn json_body() -> impl Filter<Extract = (database::DatabaseVar,), Error = warp::Rejection> + Clone {
+    // When accepting a body, we want a JSON body
+    // (and to reject huge payloads)...
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
 #[tokio::main]

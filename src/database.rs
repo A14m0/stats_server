@@ -10,7 +10,7 @@ use std::sync::{
 };
 
 // define our DatabaseVar class
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct DatabaseVar {
     name: String,
     value: String,
@@ -27,6 +27,28 @@ impl DatabaseVar {
             date
         }
     }
+
+    /// creates a new empty variable
+    pub fn empty() -> Self {
+        DatabaseVar {
+            name: String::new(),
+            value: String::new(),
+            date: String::new()
+        }
+    }
+
+    /// returns name
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    /// returns value
+    pub fn value(&self) -> String {
+        self.value.clone()
+    }
+    /// returns date
+    pub fn date(&self) -> String {
+        self.date.clone()
+    }
 }
 
 // define our Database structure
@@ -40,6 +62,11 @@ impl Database {
     /// add a new entry
     pub fn add_entry(&mut self, new_entry: DatabaseVar) {
         self.vars.push(new_entry);
+    }
+
+    /// returns the entries in the database
+    pub fn entries(&self) -> Vec<DatabaseVar> {
+        self.vars.clone()
     }
 }
 
