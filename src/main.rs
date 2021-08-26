@@ -1,29 +1,47 @@
 use warp::Filter;
 use clap::{Arg, App, SubCommand};
-#[macro_use] extern crate serde;
-
+use std::sync::Arc;
+use futures::lock::Mutex;
+use std::convert::Infallible;
 
 mod handler;
 mod config;
 mod log;
+mod database;
 use log::{
     log,
     LTYPE
 };
 
-async fn run_server(config_struct: config::Config) {
+async fn run_server(config_struct: config::Config, dbpath: Option<String>) {//db: Arc<Mutex<database::Database>>) {
     log(LTYPE::Info, format!("Started web server"));
+
+    // create a new mutex for a handler object
+    let db = match database::init_db(dbpath) {
+            Ok(a) => a,
+            Err(e) => panic!("Failed to open database! ({})", e)
+        };
 
     // favicon path filter
     //let favico = warp::path("favicon.ico").and(warp::fs::file("favicon.ico"));
 
     // api filters
     let api_root = warp::path!("api"/..);
+    
     let push = warp::path!("post" / String / String)
         .and(warp::post())
-        .and_then(handler::post_handle);
+        .and(with_db(db.clone()))
+        .and_then( move |uuid, encdat, db1: database::Db|  {
+                    handler::post_handle(uuid, encdat, db1)
+            }
+        );
     let get = warp::path!("get" / String / String)
-        .and_then(handler::get_handle);
+        .and(with_db(db))
+        .and_then(move |uuid, encdat, db2| {
+                    handler::get_handle(uuid, encdat, db2)        
+            } 
+            
+        );
 
     let api = api_root
         .and(push.or(get));
@@ -36,6 +54,10 @@ async fn run_server(config_struct: config::Config) {
         .key_path("./key.pem")
         .run(([127,0,0,1],config_struct.port()))
         .await;
+}
+
+fn with_db(db: database::Db) -> impl Filter<Extract = (database::Db,), Error = Infallible> + Clone {
+    warp::any().map(move || db.clone())
 }
 
 #[tokio::main]
@@ -123,7 +145,7 @@ async fn main() {
                 };
 
                 // run the server
-                run_server(cfg_file).await
+                run_server(cfg_file, None).await
             },
             None => panic!("Missing crit arg")
         }
